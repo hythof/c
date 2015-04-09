@@ -1,27 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <omp.h>
 
-#define COUNT 100 * 1024 * 1024
+#define COUNT 100 * 1000 * 1000
+double step;
 
 int main(int argc, char *argv[]) {
-    unsigned long long sum = 0;
-    int *xs = (int *)malloc(sizeof(int) * COUNT);
-    int i;
-    clock_t start;
+    clock_t start = clock();
+    long int sum = 0;
+    int *x = malloc(sizeof(int) * COUNT);
 
-    start = clock();
-#if OPENMP
-#pragma omp parallel for reduction(+:sum)
+#if _OPENMP
+#pragma omp for nowait
 #endif
-    for(i=0; i<COUNT; ++i) {
-        xs[i] = i;
-        sum += i;
+    for(int i=0; i<COUNT; ++i) {
+        x[i] = i;
     }
 
+//#if _OPENMP
+//#pragma omp parallel for reduction(+:sum)
+//#endif
+    for(int i=0; i<COUNT; ++i) {
+        sum += x[i];
+    }
     int msec = clock() - start;
-#if OPENMP
-    printf("parallel sum = %ld : msec %d\n", sum, msec);
+
+#if _OPENMP
+    printf("parallel sum = %ld : msec %d cpu=%d\n", sum, msec, omp_get_num_procs());
 #else
     printf("  serial sum = %ld : msec %d\n", sum, msec);
 #endif
